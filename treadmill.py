@@ -2,13 +2,17 @@ import cv2
 import google.generativeai as genai
 import json
 import os
+import sys
 import time
 import mediapipe as mp
 import numpy as np
 
 # --- Configuration ---
-# Set your video source: 0 for webcam, or "path/to/your_treadmill_video.mp4"
-VIDEO_SOURCE = "your_treadmill_video.mp4" 
+# Video source: first CLI argument, else the VIDEO_SOURCE env var, else the placeholder.
+# Use "0" for the webcam, or a path such as "path/to/your_treadmill_video.mp4".
+VIDEO_SOURCE = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("VIDEO_SOURCE", "your_treadmill_video.mp4")
+if VIDEO_SOURCE.isdigit():
+    VIDEO_SOURCE = int(VIDEO_SOURCE)  # camera index
 
 # Gemini API configuration
 # It's HIGHLY recommended to set this as an environment variable (export GOOGLE_API_KEY="YOUR_KEY")
@@ -20,7 +24,9 @@ if not API_KEY:
     exit()
 
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')  # current multimodal model (gemini-pro-vision was retired)
+# Model ID is configurable; gemini-1.5-flash may be retired, so set GEMINI_MODEL to a current model.
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
+model = genai.GenerativeModel(GEMINI_MODEL)
 
 # Frame processing rate for Gemini (send one image every X seconds)
 GEMINI_QUERY_INTERVAL = 2.0 # seconds
